@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profesionalisme Unggul di Bidang Teknologi Informasi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --transition-speed: 0.5s;
+            --color-accent-default-dark: #60a5fa; /* blue-400 */
+            --color-accent-default-light: #2563eb; /* blue-600 */
+        }
+
+        /* --- Variabel Warna untuk Tema --- */
+        html[data-theme='dark'] {
+            --bg-start: #0f172a; /* slate-900 */
+            --bg-end: #020617; /* slate-950 */
+            --text-primary: #f8fafc; /* slate-50 */
+            --text-secondary: #cbd5e1; /* slate-300 */
+            --text-muted: #94a3b8; /* slate-400 */
+            --text-accent: var(--color-accent, var(--color-accent-default-dark));
+            --section-bg: rgba(17, 24, 39, 0.8);
+            --card-bg: rgba(31, 41, 55, 0.5);
+            --card-hover-bg: rgba(55, 65, 81, 0.7);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --border-hover-color: rgba(96, 165, 250, 0.5);
+            --chart-grid-color: rgba(255, 255, 255, 0.2);
+            --chart-label-color: #f9fafb;
+            --chart-tick-bg: rgba(17, 24, 39, 0.6);
+            --header-bg: rgba(17, 24, 39, 0.7);
+        }
+
+        html[data-theme='light'] {
+            --bg-start: #7dd3fc; /* sky-300 */
+            --bg-end: #f0f9ff; /* sky-50 */
+            --text-primary: #0f172a; /* slate-900 */
+            --text-secondary: #334155; /* slate-700 */
+            --text-muted: #64748b; /* slate-500 */
+            --text-accent: var(--color-accent, var(--color-accent-default-light));
+            --section-bg: rgba(255, 255, 255, 0.85);
+            --card-bg: rgba(241, 245, 249, 0.7); /* slate-100 */
+            --card-hover-bg: rgba(255, 255, 255, 1);
+            --border-color: rgba(0, 0, 0, 0.1);
+            --border-hover-color: rgba(59, 130, 246, 0.5);
+            --chart-grid-color: rgba(0, 0, 0, 0.1);
+            --chart-label-color: #1e293b; /* slate-800 */
+            --chart-tick-bg: rgba(241, 245, 249, 0.9);
+            --header-bg: rgba(255, 255, 255, 0.8);
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--text-secondary);
+            transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
+        }
+        
+        #bg-canvas {
+            position: fixed; top: 0; left: 0; width: 100%;
+            height: 100vh; z-index: -1;
+            background: linear-gradient(to bottom, var(--bg-start), var(--bg-end));
+            transition: background var(--transition-speed) ease;
+        }
+
+        main, header, footer { position: relative; z-index: 1; }
+
+        section {
+            background-color: var(--section-bg);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem; margin: 2rem 1rem; padding: 4rem 1.5rem;
+            transition: background-color var(--transition-speed) ease, border-color var(--transition-speed) ease, opacity 0.6s ease-out, transform 0.6s ease-out;
+            opacity: 0; transform: translateY(30px);
+        }
+        section.is-visible { opacity: 1; transform: translateY(0); }
+        
+        @media (min-width: 768px) {
+            section { margin: 4rem auto; max-width: 1200px; padding: 5rem 2.5rem; }
+        }
+        
+        header {
+            background-color: var(--header-bg);
+            backdrop-filter: blur(10px);
+            transition: background-color var(--transition-speed) ease;
+        }
+
+        .nav-link.active { color: var(--text-accent); font-weight: 600; }
+        h1, h2, h3, .text-xl.font-bold { color: var(--text-primary); transition: color var(--transition-speed) ease; }
+        .font-mono { color: var(--text-muted); transition: color var(--transition-speed) ease; }
+        
+        .card {
+            background-color: var(--card-bg); border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        .card:hover { background-color: var(--card-hover-bg); border-color: var(--border-hover-color); transform: translateY(-8px); }
+        .card h3, .card-accent-text { color: var(--text-accent); transition: color var(--transition-speed) ease; }
+
+        .chart-container { position: relative; width: 100%; max-width: 500px; margin-left: auto; margin-right: auto; height: 350px; }
+        
+        .accordion-item { background-color: var(--card-bg); border: 1px solid var(--border-color); transition: background-color var(--transition-speed) ease, border-color var(--transition-speed) ease; }
+        .accordion-header { color: var(--text-primary); transition: color var(--transition-speed) ease; }
+        .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
+        
+        #theme-controls { color: var(--text-primary); }
+
+        /* Tombol Kembali ke Atas */
+        #back-to-top {
+            position: fixed; bottom: -50px; right: 20px;
+            background-color: var(--text-accent); color: white;
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; opacity: 0; transition: opacity 0.3s, bottom 0.3s, background-color var(--transition-speed) ease;
+            z-index: 100; border: none;
+        }
+        #back-to-top.visible { opacity: 1; bottom: 20px; }
+
+        /* Panel Kustomisasi */
+        #settings-panel {
+            position: fixed; top: 70px; right: -300px;
+            width: 250px; background-color: var(--section-bg);
+            backdrop-filter: blur(10px); border: 1px solid var(--border-color);
+            border-radius: 0.5rem; padding: 1rem;
+            z-index: 100; transition: right 0.4s ease-in-out;
+        }
+        #settings-panel.visible { right: 20px; }
+    </style>
+</head>
+<body>
+
+    <canvas id="bg-canvas"></canvas>
+
+    <header class="shadow-md sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-3">
+            <div class="flex justify-between items-center">
+                <div class="text-xl font-bold">Profesionalisme IT</div>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#definisi" class="nav-link">Definisi</a>
+                    <a href="#pilar" class="nav-link">3 Pilar</a>
+                    <a href="#tantangan" class="nav-link">Tantangan</a>
+                    <a href="#studi-kasus" class="nav-link">Studi Kasus</a>
+                    <a href="#rekomendasi" class="nav-link">Rekomendasi</a>
+                </div>
+                <div id="theme-controls" class="flex items-center gap-4 text-sm">
+                    <div id="clock" class="font-mono hidden sm:block"></div>
+                    <button id="theme-toggle" class="text-2xl cursor-pointer focus:outline-none"></button>
+                    <button id="settings-toggle" class="text-2xl cursor-pointer focus:outline-none">⚙️</button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4">
+        <section id="hero" class="text-center rounded-lg border-none !bg-transparent !backdrop-filter-none my-16 md:my-24 is-visible">
+            <h1 class="text-4xl md:text-6xl font-bold mb-4 leading-tight">Membangun Profesionalisme Unggul di Bidang IT</h1>
+            <p class="text-lg md:text-xl max-w-3xl mx-auto">Sebuah eksplorasi interaktif mengenai kompetensi, etika, dan tantangan yang dihadapi para profesional teknologi di era digital modern.</p>
+        </section>
+
+        <section id="kelompok">
+            <div class="text-center">
+                <h2 class="text-2xl font-semibold mb-8">Disusun oleh: Kelompok 1</h2>
+                <div class="flex flex-wrap justify-center gap-8">
+                    <div class="card p-6 rounded-lg shadow-lg w-full sm:w-auto min-w-[250px] text-center">
+                        <h3 class="text-xl font-bold">Farhan</h3>
+                        <p class="font-mono mt-1">24210056</p>
+                    </div>
+                    <div class="card p-6 rounded-lg shadow-lg w-full sm:w-auto min-w-[250px] text-center">
+                        <h3 class="text-xl font-bold">Afrah Salsabila</h3>
+                        <p class="font-mono mt-1">24210066</p>
+                    </div>
+                    <div class="card p-6 rounded-lg shadow-lg w-full sm:w-auto min-w-[250px] text-center">
+                        <h3 class="text-xl font-bold">Haykal Furqan Shafiq</h3>
+                        <p class="font-mono mt-1">24210076</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Konten lain (definisi, pilar, dll.) tetap sama -->
+        <section id="definisi">
+            <div class="container mx-auto">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold">Apa Itu Profesionalisme IT?</h2>
+                    <p class="mt-4 text-lg max-w-2xl mx-auto">Profesionalisme IT melampaui keahlian teknis. Ini adalah perpaduan antara kompetensi, etika, dan perilaku yang bertanggung jawab terhadap pekerjaan, klien, dan masyarakat.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div class="card p-6 rounded-lg shadow-lg">
+                        <h3 class="text-xl font-semibold card-accent-text mb-3">Akuntabel</h3>
+                        <p>Bertanggung jawab penuh atas kualitas kode, keamanan sistem, dan keandalan infrastruktur. Fokus pada solusi saat terjadi kesalahan, bukan mencari alasan.</p>
+                    </div>
+                    <div class="card p-6 rounded-lg shadow-lg">
+                        <h3 class="text-xl font-semibold card-accent-text mb-3">Berintegritas</h3>
+                        <p>Menjunjung tinggi kejujuran, tidak memanipulasi data, tidak melanggar privasi, dan menolak solusi yang memiliki celah keamanan demi keuntungan sesaat.</p>
+                    </div>
+                    <div class="card p-6 rounded-lg shadow-lg">
+                        <h3 class="text-xl font-semibold card-accent-text mb-3">Berorientasi pada Kualitas</h3>
+                        <p>Memiliki komitmen untuk memberikan hasil terbaik, bukan sekadar "yang penting jalan". Tercermin dari kode yang bersih dan pengujian yang menyeluruh.</p>
+                    </div>
+                    <div class="card p-6 rounded-lg shadow-lg">
+                        <h3 class="text-xl font-semibold card-accent-text mb-3">Pembelajar Seumur Hidup</h3>
+                        <p>Proaktif memperbarui pengetahuan, mempelajari teknologi baru, dan beradaptasi dengan perubahan di industri yang bergerak sangat cepat.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="pilar">
+            <div class="container mx-auto">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold">Tiga Pilar Utama Profesionalisme</h2>
+                    <p class="mt-4 text-lg max-w-2xl mx-auto">Seorang profesional IT yang unggul dibangun di atas tiga pilar yang saling menopang, menciptakan fondasi yang kokoh untuk karir yang sukses dan bertanggung jawab.</p>
+                </div>
+                <div class="flex flex-col lg:flex-row items-center justify-center gap-12">
+                    <div class="w-full lg:w-1/2">
+                       <div class="chart-container">
+                           <canvas id="pilarChart"></canvas>
+                       </div>
+                    </div>
+                    <div class="w-full lg:w-1/2 space-y-8">
+                        <div>
+                            <h3 class="text-xl font-semibold card-accent-text mb-2">1. Kompetensi Teknis (Hard Skills)</h3>
+                            <p>Fondasi penguasaan teknologi, mulai dari algoritma, bahasa pemrograman, manajemen basis data, hingga keamanan siber. Pilar ini harus terus diasah seiring perkembangan zaman.</p>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold card-accent-text mb-2">2. Kompetensi Interpersonal (Soft Skills)</h3>
+                            <p>Kemampuan komunikasi, kerja sama tim, pemecahan masalah, dan manajemen waktu. Menjadi penentu keberhasilan dalam proyek kolaboratif.</p>
+                        </div>
+                         <div>
+                            <h3 class="text-xl font-semibold card-accent-text mb-2">3. Etika & Tanggung Jawab Moral</h3>
+                            <p>Kompas moral yang memandu setiap keputusan. Meliputi perlindungan privasi data, penghargaan terhadap kekayaan intelektual, dan transparansi.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tantangan">
+            <div class="container mx-auto">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold">Tantangan di Era Digital</h2>
+                    <p class="mt-4 text-lg max-w-2xl mx-auto">Menjaga profesionalisme di tengah disrupsi digital memiliki tantangan unik yang perlu diwaspadai dan diatasi oleh setiap praktisi.</p>
+                </div>
+                <div class="max-w-3xl mx-auto space-y-4">
+                    <div class="accordion-item rounded-lg shadow-md">
+                        <button class="accordion-header w-full text-left p-5 font-semibold text-lg flex justify-between items-center transition-colors hover:bg-gray-700/50">
+                            Kecepatan Inovasi
+                            <span class="transform transition-transform duration-300">&#9662;</span>
+                        </button>
+                        <div class="accordion-content">
+                            <p class="p-5 pt-0">Tuntutan untuk terus belajar teknologi baru bisa memicu godaan untuk mengambil jalan pintas tanpa pemahaman fundamental, berisiko menghasilkan solusi yang rapuh.</p>
+                        </div>
+                    </div>
+                    <div class="accordion-item rounded-lg shadow-md">
+                        <button class="accordion-header w-full text-left p-5 font-semibold text-lg flex justify-between items-center transition-colors hover:bg-gray-700/50">
+                            Tekanan Proyek
+                            <span class="transform transition-transform duration-300">&#9662;</span>
+                        </button>
+                        <div class="accordion-content">
+                            <p class="p-5 pt-0">Tenggat waktu yang ketat seringkali memaksa pengembang mengorbankan kualitas, pengujian, atau standar keamanan demi kecepatan rilis produk ke pasar.</p>
+                        </div>
+                    </div>
+                    <div class="accordion-item rounded-lg shadow-md">
+                        <button class="accordion-header w-full text-left p-5 font-semibold text-lg flex justify-between items-center transition-colors hover:bg-gray-700/50">
+                            Ambiguitas Etis
+                            <span class="transform transition-transform duration-300">&#9662;</span>
+                        </button>
+                        <div class="accordion-content">
+                            <p class="p-5 pt-0">Munculnya AI dan analisis big data menciptakan dilema etis baru (misalnya, bias algoritma, profil pengguna) yang belum memiliki preseden hukum yang jelas.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="studi-kasus">
+            <div class="container mx-auto">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold">Studi Kasus: Dampak Nyata</h2>
+                    <p class="mt-4 text-lg max-w-2xl mx-auto">Bagaimana penerapan dan pengabaian profesionalisme memberikan hasil yang sangat kontras di dunia nyata.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                    <div class="card p-8 rounded-lg shadow-lg border-l-4 border-green-500">
+                        <h3 class="text-2xl font-semibold text-green-400 mb-4">POSITIF: Proyek Open Source</h3>
+                        <p>Proyek seperti Linux atau Python menunjukkan kekuatan profesionalisme berbasis komunitas. Standar kode yang ketat, review transparan, dan dokumentasi jelas menghasilkan produk yang andal dan aman.</p>
+                    </div>
+                    <div class="card p-8 rounded-lg shadow-lg border-l-4 border-red-500">
+                        <h3 class="text-2xl font-semibold text-red-400 mb-4">NEGATIF: Skandal Cambridge Analytica</h3>
+                        <p>Contoh kegagalan etis serius. Pengambilan data tanpa izin menyebabkan kerugian reputasi masif, denda miliaran dolar, dan hancurnya kepercayaan publik terhadap platform terkait.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="rekomendasi">
+            <div class="container mx-auto">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold">Rekomendasi & Langkah ke Depan</h2>
+                    <p class="mt-4 text-lg max-w-2xl mx-auto">Membangun ekosistem IT yang inovatif dan bertanggung jawab memerlukan upaya kolektif dari semua pihak terkait.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div class="card p-6 rounded-lg shadow-md flex flex-col">
+                        <h3 class="text-xl font-semibold card-accent-text mb-3">Bagi Mahasiswa</h3>
+                        <p class="flex-grow">Seimbangkan *hard skills* dengan *soft skills*. Terlibat aktif dalam diskusi etika teknologi untuk membangun kompas moral.</p>
+                    </div>
+                    <div class="card p-6 rounded-lg shadow-md flex flex-col">
+                        <h3 class="text-xl font-semibold card-accent-text mb-3">Bagi Institusi Pendidikan</h3>
+                        <p class="flex-grow">Integrasikan mata kuliah etika profesi, hukum siber, dan dampak sosial teknologi sebagai bagian wajib dalam kurikulum.</p>
+                    </div>
+                    <div class="card p-6 rounded-lg shadow-md flex flex-col">
+                        <h3 class="text-xl font-semibold card-accent-text mb-3">Bagi Industri</h3>
+                        <p class="flex-grow">Ciptakan budaya kerja yang menghargai profesionalisme melalui standar yang jelas dan proses review yang ketat.</p>
+                    </div>
+                    <div class="card p-6 rounded-lg shadow-md flex flex-col">
+                        <h3 class="text-xl font-semibold card-accent-text mb-3">Bagi Profesional</h3>
+                        <p class="flex-grow">Bangun portofolio publik, berkontribusi pada proyek *open source*, dan aktif berbagi pengetahuan untuk membangun reputasi.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-transparent py-8 px-6 mt-16">
+        <div class="container mx-auto text-center">
+            <p>&copy; 2025 - Makalah ini disusun oleh Kelompok 1.</p>
+            <p class="text-muted mt-2">Program Studi Ilmu Komputer, Universitas Bina Bangsa Getsempena</p>
+        </div>
+    </footer>
+
+    <!-- Elemen Interaktif Tambahan -->
+    <button id="back-to-top" title="Kembali ke atas">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5z"/>
+        </svg>
+    </button>
+
+    <div id="settings-panel" class="shadow-lg">
+        <label for="color-picker" class="font-semibold mb-2 block" style="color: var(--text-primary);">Warna Aksen</label>
+        <input type="color" id="color-picker" class="w-full h-8 p-0 border-none rounded cursor-pointer">
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- VARIABEL & ELEMEN DOM ---
+            const doc = document.documentElement;
+            const clockElement = document.getElementById('clock');
+            const themeToggleButton = document.getElementById('theme-toggle');
+            const backToTopButton = document.getElementById('back-to-top');
+            const settingsToggleButton = document.getElementById('settings-toggle');
+            const settingsPanel = document.getElementById('settings-panel');
+            const colorPicker = document.getElementById('color-picker');
+            const sections = document.querySelectorAll('section');
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            // Three.js & Chart.js
+            let scene, camera, renderer, particlesMaterial, pilarChart;
+
+            // --- FUNGSI-FUNGSI ---
+
+            const updateClock = () => {
+                const now = new Date();
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                const dateString = now.toLocaleDateString('id-ID', options);
+                const timeString = now.toLocaleTimeString('id-ID', { hour12: false });
+                clockElement.textContent = `${dateString} — ${timeString}`;
+            };
+
+            const applyTheme = (theme, accentColor) => {
+                doc.setAttribute('data-theme', theme);
+                localStorage.setItem('theme', theme);
+
+                if (accentColor) {
+                    doc.style.setProperty('--color-accent', accentColor);
+                    localStorage.setItem('accentColor', accentColor);
+                    colorPicker.value = accentColor;
+                }
+
+                const currentAccent = getComputedStyle(doc).getPropertyValue('--text-accent').trim();
+
+                if (theme === 'dark') {
+                    themeToggleButton.innerHTML = '☀️';
+                    if (particlesMaterial) particlesMaterial.color.set(currentAccent);
+                    updateChartColors('#f9fafb', 'rgba(255, 255, 255, 0.2)', 'rgba(17, 24, 39, 0.6)', currentAccent);
+                } else {
+                    themeToggleButton.innerHTML = '🌙';
+                    if (particlesMaterial) particlesMaterial.color.set(currentAccent);
+                    updateChartColors('#1e293b', 'rgba(0, 0, 0, 0.1)', 'rgba(241, 245, 249, 0.8)', currentAccent);
+                }
+            };
+            
+            const initializeApp = () => {
+                // Inisialisasi Jam
+                updateClock();
+                setInterval(updateClock, 1000);
+
+                // Inisialisasi Three.js & Chart.js
+                initThreeJS();
+                initChart();
+
+                // Inisialisasi Tema (Otomatis atau dari localStorage)
+                const savedTheme = localStorage.getItem('theme');
+                const savedAccent = localStorage.getItem('accentColor');
+                
+                if (savedTheme) {
+                    applyTheme(savedTheme, savedAccent);
+                } else {
+                    const currentHour = new Date().getHours();
+                    const autoTheme = (currentHour >= 6 && currentHour < 18) ? 'light' : 'dark';
+                    applyTheme(autoTheme, savedAccent);
+                }
+
+                // Inisialisasi Listener
+                setupEventListeners();
+                initScrollAnimations();
+            };
+
+            // --- INISIALISASI PERIPHERAL ---
+            
+            const initThreeJS = () => {
+                scene = new THREE.Scene();
+                camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg-canvas'), alpha: true });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                camera.position.z = 50;
+                
+                const particlesGeometry = new THREE.BufferGeometry();
+                const count = 2000;
+                const positions = new Float32Array(count * 3);
+                for (let i = 0; i < count * 3; i++) {
+                    positions[i] = (Math.random() - 0.5) * 200;
+                }
+                particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                
+                particlesMaterial = new THREE.PointsMaterial({
+                    size: 0.15, blending: THREE.AdditiveBlending, depthWrite: false,
+                });
+                const particles = new THREE.Points(particlesGeometry, particlesMaterial);
+                scene.add(particles);
+
+                const clock = new THREE.Clock();
+                const animate = () => {
+                    particles.rotation.y = clock.getElapsedTime() * 0.05;
+                    renderer.render(scene, camera);
+                    window.requestAnimationFrame(animate);
+                };
+                animate();
+            };
+
+            const initChart = () => {
+                const ctx = document.getElementById('pilarChart').getContext('2d');
+                pilarChart = new Chart(ctx, { /* ... Opsi Chart ... */ 
+                    type: 'radar',
+                    data: {
+                        labels: ['Kompetensi Teknis', 'Etika & Moral', 'Kompetensi Interpersonal'],
+                        datasets: [{
+                            label: 'Profil Profesional Ideal', data: [9, 8, 9],
+                            backgroundColor: 'rgba(96, 165, 250, 0.2)', borderColor: 'rgba(96, 165, 250, 1)',
+                            borderWidth: 2, pointBackgroundColor: 'rgba(96, 165, 250, 1)', pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff', pointHoverBorderColor: 'rgba(96, 165, 250, 1)'
+                        }]
+                    },
+                    options: { maintainAspectRatio: false, scales: { r: { /* ... */ } }, plugins: { legend: { labels: { /* ... */ } } } }
+                });
+            };
+
+            const updateChartColors = (labelColor, gridColor, tickBgColor, accentColor) => {
+                if (!pilarChart) return;
+                const options = pilarChart.options;
+                options.scales.r.pointLabels.color = labelColor;
+                options.scales.r.grid.color = gridColor;
+                options.scales.r.angleLines.color = gridColor;
+                options.scales.r.ticks.backdropColor = tickBgColor;
+                options.scales.r.ticks.color = labelColor;
+                options.plugins.legend.labels.color = labelColor;
+                
+                const dataset = pilarChart.data.datasets[0];
+                const color = new THREE.Color(accentColor);
+                dataset.backgroundColor = `rgba(${color.r*255}, ${color.g*255}, ${color.b*255}, 0.2)`;
+                dataset.borderColor = accentColor;
+                dataset.pointBackgroundColor = accentColor;
+                dataset.pointHoverBorderColor = accentColor;
+
+                pilarChart.update();
+            };
+
+            const initScrollAnimations = () => {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('is-visible');
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                }, { threshold: 0.1 });
+
+                document.querySelectorAll('section').forEach(section => observer.observe(section));
+            };
+
+            // --- EVENT LISTENERS ---
+
+            const setupEventListeners = () => {
+                themeToggleButton.addEventListener('click', () => {
+                    const newTheme = doc.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+                    applyTheme(newTheme, localStorage.getItem('accentColor'));
+                });
+
+                settingsToggleButton.addEventListener('click', () => settingsPanel.classList.toggle('visible'));
+
+                colorPicker.addEventListener('input', (e) => {
+                    applyTheme(doc.getAttribute('data-theme'), e.target.value);
+                });
+
+                backToTopButton.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+                window.addEventListener('scroll', () => {
+                    // Back to top button visibility
+                    if (window.scrollY > 300) {
+                        backToTopButton.classList.add('visible');
+                    } else {
+                        backToTopButton.classList.remove('visible');
+                    }
+
+                    // Active nav link
+                    let current = '';
+                    sections.forEach(section => {
+                        const sectionTop = section.offsetTop;
+                        if (pageYOffset >= sectionTop - 150) {
+                            current = section.getAttribute('id');
+                        }
+                    });
+                    navLinks.forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href').includes(current)) {
+                            link.classList.add('active');
+                        }
+                    });
+                });
+
+                window.addEventListener('resize', () => {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                });
+
+                // Accordion (Tidak berubah)
+                document.querySelectorAll('.accordion-header').forEach(header => {
+                    header.addEventListener('click', () => {
+                        const content = header.nextElementSibling;
+                        if (content.style.maxHeight) {
+                            content.style.maxHeight = null;
+                        } else {
+                            content.style.maxHeight = content.scrollHeight + "px";
+                        }
+                    });
+                });
+            };
+
+            // --- JALANKAN APLIKASI ---
+            initializeApp();
+        });
+    </script>
+</body>
+</html>
+
